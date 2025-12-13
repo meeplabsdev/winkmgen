@@ -25,6 +25,7 @@ mod parameter_declaration;
 mod parameter_list;
 mod parenthesized_expression;
 mod pointer_declaration;
+mod pointer_expression;
 mod preproc_arg;
 mod preproc_call;
 mod preproc_def;
@@ -113,6 +114,7 @@ impl<'a> ToRust<'a> for Entity<'a> {
             317 => h!(expression_statement::ExpressionStatement),
             318 => h!(if_statement::IfStatement),
             338 => h!(assignment_expression::AssignmentExpression),
+            339 => h!(pointer_expression::PointerExpression),
             341 => h!(binary_expression::BinaryExpression),
             350 => h!(call_expression::CallExpression),
             360 => h!(argument_list::ArgumentList),
