@@ -2,6 +2,7 @@ use tree_sitter::{Node, TreeCursor};
 
 use crate::get_from_range;
 
+mod argument_list;
 mod assign;
 mod assignment_expression;
 mod binary_expression;
@@ -114,6 +115,7 @@ impl<'a> ToRust<'a> for Entity<'a> {
             338 => h!(assignment_expression::AssignmentExpression),
             341 => h!(binary_expression::BinaryExpression),
             350 => h!(call_expression::CallExpression),
+            360 => h!(argument_list::ArgumentList),
             363 => h!(parenthesized_expression::ParenthesizedExpression),
             371 => h!(string_literal::StringLiteral),
             479 => h!(destructor_name::DestructorName),
