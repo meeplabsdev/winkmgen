@@ -10,6 +10,7 @@ mod call_expression;
 mod close_context;
 mod comment;
 mod compound_statement;
+mod condition_clause;
 mod destructor_name;
 mod expression_statement;
 mod field_declaration;
@@ -120,6 +121,7 @@ impl<'a> ToRust<'a> for Entity<'a> {
             360 => h!(argument_list::ArgumentList),
             363 => h!(parenthesized_expression::ParenthesizedExpression),
             371 => h!(string_literal::StringLiteral),
+            441 => h!(condition_clause::ConditionClause),
             479 => h!(destructor_name::DestructorName),
             538 => h!(field_identifier::FieldIdentifier),
             542 => h!(type_identifier::TypeIdentifier),
