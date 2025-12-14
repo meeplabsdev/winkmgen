@@ -30,8 +30,10 @@ fn main() -> Result<(), Error> {
 
     let mut source_code = String::new();
     fs::File::open(in_file)?.read_to_string(&mut source_code)?;
+
     SOURCE.lock().unwrap().extend(source_code.as_bytes());
     let tree = parser.parse(source_code, None).unwrap();
+    enumerate_tree(&mut tree.walk(), 0);
 
     let mut cursor = tree.walk();
     let root = cursor.node();
@@ -39,7 +41,6 @@ fn main() -> Result<(), Error> {
     let entity = Entity::new(&mut cursor, root);
     let mut file = fs::File::create(out_file)?;
     file.write_all(entity.r().ok_or("Invalid file")?.as_bytes())?;
-    enumerate_tree(&mut cursor, 0);
 
     Ok(())
 }
