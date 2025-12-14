@@ -7,7 +7,6 @@ mod assign;
 mod assignment_expression;
 mod binary_expression;
 mod call_expression;
-mod close_context;
 mod comment;
 mod compound_statement;
 mod condition_clause;
@@ -21,7 +20,6 @@ mod function_definition;
 mod greater_than_or_equal;
 mod identifier;
 mod if_statement;
-mod open_context;
 mod parameter_declaration;
 mod parameter_list;
 mod parenthesized_expression;
@@ -89,8 +87,6 @@ impl<'a> ToRust<'a> for Entity<'a> {
             18 => h!(preproc_arg::PreprocArg),
             19 => h!(preproc_directive::PreprocDirective),
             37 => h!(greater_than_or_equal::GreaterThanOrEqual),
-            65 => h!(open_context::OpenContext),
-            66 => h!(close_context::CloseContext),
             74 => h!(assign::Assign),
             96 => h!(primitive_type::PrimitiveType),
             170 => h!(string_content::StringContent),
@@ -125,6 +121,7 @@ impl<'a> ToRust<'a> for Entity<'a> {
             479 => h!(destructor_name::DestructorName),
             538 => h!(field_identifier::FieldIdentifier),
             542 => h!(type_identifier::TypeIdentifier),
+            5 | 8 | 10 | 42 | 65 | 66 => Some(String::new()),
             _ => None,
         };
 
