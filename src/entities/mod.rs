@@ -1,6 +1,4 @@
-use tree_sitter::{Node, TreeCursor};
-
-use crate::get_from_range;
+use crate::entity::{Entity, pEntity};
 
 mod argument_list;
 mod assign;
@@ -10,6 +8,8 @@ mod call_expression;
 mod comment;
 mod compound_statement;
 mod condition_clause;
+mod r#const;
+mod declaration;
 mod destructor_name;
 mod expression_statement;
 mod field_declaration;
@@ -17,9 +17,13 @@ mod field_declaration_list;
 mod field_identifier;
 mod function_declarator;
 mod function_definition;
+mod greater_than;
 mod greater_than_or_equal;
 mod identifier;
 mod if_statement;
+mod init_declarator;
+mod linkage_specification;
+mod number_literal;
 mod parameter_declaration;
 mod parameter_list;
 mod parenthesized_expression;
@@ -40,55 +44,31 @@ mod system_lib_string;
 mod translation_unit;
 mod type_definition;
 mod type_identifier;
+mod type_qualifier;
 
-pub trait ToRust<'a> {
+const NONE: Option<String> = Some(String::new());
+
+pub trait Entityable<'a> {
+    fn new(entity: pEntity<'a>) -> Self;
     fn r(&'a self) -> Option<String>;
 }
 
-#[derive(Debug, Clone)]
-pub struct Entity<'a> {
-    node: Node<'a>,
-    content: String,
-    children: Vec<Entity<'a>>,
-}
-
 impl<'a> Entity<'a> {
-    pub fn new(cursor: &mut TreeCursor<'a>, node: Node<'a>) -> Self {
-        Self {
-            node,
-            content: get_from_range(node.byte_range()),
-            children: node
-                .children(cursor)
-                .collect::<Vec<Node>>()
-                .iter()
-                .map(|c| Entity::new(cursor, *c))
-                .collect(),
-        }
-    }
-
-    pub fn ascend_until(&self, kind: u16) -> Option<Node<'a>> {
-        let mut node = self.node;
-        while node.kind_id() != kind {
-            node = node.parent()?;
-        }
-
-        Some(node)
-    }
-}
-
-impl<'a> ToRust<'a> for Entity<'a> {
-    fn r(&'a self) -> Option<String> {
+    pub fn r(&'a self) -> Option<String> {
         macro_rules! h {
-            ( $x:expr ) => {{ $x(self).r() }};
+            ( $m:ident::$c:ident ) => {{ $m::$c::new(self).r() }};
         }
 
-        let res = match self.node.kind_id() {
-            1 => h!(identifier::Identifier),
-            18 => h!(preproc_arg::PreprocArg),
-            19 => h!(preproc_directive::PreprocDirective),
-            37 => h!(greater_than_or_equal::GreaterThanOrEqual),
-            74 => h!(assign::Assign),
-            96 => h!(primitive_type::PrimitiveType),
+        let mut res = match self.kind() {
+            001 => h!(identifier::Identifier),
+            018 => h!(preproc_arg::PreprocArg),
+            019 => h!(preproc_directive::PreprocDirective),
+            036 => h!(greater_than::GreaterThan),
+            037 => h!(greater_than_or_equal::GreaterThanOrEqual),
+            074 => h!(assign::Assign),
+            082 => h!(r#const::Const),
+            096 => h!(primitive_type::PrimitiveType),
+            158 => h!(number_literal::NumberLiteral),
             170 => h!(string_content::StringContent),
             172 => h!(system_lib_string::SystemLibString),
             177 => h!(comment::Comment),
@@ -99,10 +79,14 @@ impl<'a> ToRust<'a> for Entity<'a> {
             227 => h!(preproc_if::PreprocIf),
             228 => h!(preproc_ifdef::PreprocIfdef),
             254 => h!(function_definition::FunctionDefinition),
+            255 => h!(declaration::Declaration),
             256 => h!(type_definition::TypeDefinition),
+            261 => h!(linkage_specification::LinkageSpecification),
             282 => h!(pointer_declaration::PointerDeclaration),
             286 => h!(function_declarator::FunctionDeclarator),
+            294 => h!(init_declarator::InitDeclarator),
             295 => h!(compound_statement::CompoundStatement),
+            297 => h!(type_qualifier::TypeQualifier),
             303 => h!(struct_specifier::StructSpecifier),
             305 => h!(field_declaration_list::FieldDeclarationList),
             307 => h!(field_declaration::FieldDeclaration),
@@ -121,14 +105,87 @@ impl<'a> ToRust<'a> for Entity<'a> {
             479 => h!(destructor_name::DestructorName),
             538 => h!(field_identifier::FieldIdentifier),
             542 => h!(type_identifier::TypeIdentifier),
-            5 | 8 | 10 | 42 | 65 | 66 => Some(String::new()),
+            005 | // (
+            007 | // ,
+            008 | // )
+            010 | // \n
+            042 | // ;
+            065 | // {
+            066 | // }
+            265   // md_declspec_modifier
+                  => NONE,
+            65535 => panic!("Failed to parse token!"),
             _ => None,
         };
 
         if res.is_none() {
-            println!("got None for {:?}", self.node.kind());
+            println!("got None for {:?}", self.kind());
+        }
+
+        if res == NONE {
+            res = None;
         }
 
         res
     }
+
+    // pub fn ascend_until(&self, kind: u16) -> Option<Node<'a>> {
+    //     let mut node = self.node;
+
+    //     while node.kind_id() != kind {
+    //         node = node.parent()?;
+    //     }
+
+    //     Some(node)
+    // }
+
+    // pub fn ascend_until_any(&'a self, kind: &[u16]) -> Option<Node<'a>> {
+    //     for k in kind {
+    //         match self.ascend_until(*k) {
+    //             Some(e) => return Some(e),
+    //             None => {}
+    //         }
+    //     }
+
+    //     None
+    // }
+
+    // pub fn descend_until(&'a self, kind: u16, max_depth: u32) -> Option<&'a Entity<'a>> {
+    //     fn descend<'a>(
+    //         entity: &'a Entity<'a>,
+    //         kind: u16,
+    //         depth: u32,
+    //         max_depth: u32,
+    //     ) -> Option<&'a Entity<'a>> {
+    //         if depth > max_depth {
+    //             return None;
+    //         }
+
+    //         if entity.kind == kind {
+    //             return Some(entity);
+    //         }
+
+    //         for child in &entity.children {
+    //             match descend(child, kind, depth + 1, max_depth) {
+    //                 Some(e) => return Some(e),
+    //                 None => {}
+    //             }
+    //         }
+
+    //         None
+    //     }
+
+    //     descend(self, kind, 0, max_depth)
+    // }
+
+    // pub fn descend_until_any(&'a self, kind: &[u16], max_depth: u32) -> Option<&'a Entity<'a>> {
+    //     for k in kind {
+    //         match self.descend_until(*k, max_depth) {
+    //             Some(e) => return Some(e),
+    //             None => {}
+    //         }
+    //     }
+
+    //     None
+    // }
 }

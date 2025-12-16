@@ -1,9 +1,16 @@
-use crate::entities::{Entity, ToRust};
+use crate::entities::{Entity, Entityable};
 
 #[allow(unused)]
-pub struct PreprocDirective<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for PreprocDirective<'a> {
+pub struct PreprocDirective<'a> {
+    entity: &'a Entity<'a>,
+}
+
+impl<'a> Entityable<'a> for PreprocDirective<'a> {
+    fn new(entity: &'a Entity<'a>) -> Self {
+        Self { entity }
+    }
+
     fn r(&'a self) -> Option<String> {
-        Some(self.0.content.split_once('#')?.1.into())
+        Some(self.entity.content.split_once('#')?.1.into())
     }
 }

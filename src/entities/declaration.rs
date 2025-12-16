@@ -4,12 +4,12 @@ use crate::{
 };
 
 #[allow(unused)]
-pub struct ExpressionStatement<'a> {
+pub struct Declaration<'a> {
     entity: pEntity<'a>,
     children: vEntity<'a>,
 }
 
-impl<'a> Entityable<'a> for ExpressionStatement<'a> {
+impl<'a> Entityable<'a> for Declaration<'a> {
     fn new(entity: pEntity<'a>) -> Self {
         Self {
             entity,
@@ -22,6 +22,7 @@ impl<'a> Entityable<'a> for ExpressionStatement<'a> {
             "{};",
             self.children
                 .iter()
+                .filter(|c| c.kind() != 542 /* type_identifier */)
                 .filter_map(|c| c.r())
                 .collect::<Vec<String>>()
                 .join(" ")

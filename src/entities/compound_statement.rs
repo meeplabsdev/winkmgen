@@ -1,17 +1,27 @@
-use crate::entities::{Entity, ToRust};
+use crate::{
+    entities::Entityable,
+    entity::{pEntity, vEntity},
+};
 
 #[allow(unused)]
-pub struct CompoundStatement<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for CompoundStatement<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 2 {
-            return None;
-        }
+pub struct CompoundStatement<'a> {
+    entity: pEntity<'a>,
+    children: vEntity<'a>,
+}
 
+impl<'a> Entityable<'a> for CompoundStatement<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self {
+            entity,
+            children: entity.children(),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
         Some(format!(
             "{{\n\t{}\n}}",
-            children[1..children.len() - 1]
+            self.children
+                .half_open_offset(1, 1)
                 .iter()
                 .filter_map(|c| c.r())
                 .collect::<Vec<String>>()

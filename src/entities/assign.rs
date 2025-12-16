@@ -1,8 +1,13 @@
-use crate::entities::{Entity, ToRust};
+use crate::{entities::Entityable, entity::pEntity};
 
 #[allow(unused)]
-pub struct Assign<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for Assign<'a> {
+pub struct Assign {}
+
+impl<'a> Entityable<'a> for Assign {
+    fn new(_entity: pEntity<'a>) -> Self {
+        Self {}
+    }
+
     fn r(&'a self) -> Option<String> {
         Some(String::from("="))
     }

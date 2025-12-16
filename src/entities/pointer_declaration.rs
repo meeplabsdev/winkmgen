@@ -1,14 +1,18 @@
-use crate::entities::{Entity, ToRust};
+use crate::{entities::Entityable, entity::pEntity};
 
 #[allow(unused)]
-pub struct PointerDeclaration<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for PointerDeclaration<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 2 {
-            return None;
-        }
+pub struct PointerDeclaration<'a> {
+    entity: pEntity<'a>,
+}
 
-        Some(children.get(1)?.r()?)
+impl<'a> Entityable<'a> for PointerDeclaration<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self { entity }
+    }
+
+    fn r(&'a self) -> Option<String> {
+        self.entity
+            .depth_first_descend(&[1 /* identifier */], 1)?
+            .r()
     }
 }

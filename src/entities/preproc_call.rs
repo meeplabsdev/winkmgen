@@ -1,18 +1,23 @@
-use crate::entities::{Entity, ToRust};
+use crate::{entities::Entityable, entity::pEntity};
 
 #[allow(unused)]
-pub struct PreprocCall<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for PreprocCall<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 2 {
-            return None;
-        }
+pub struct PreprocCall<'a> {
+    entity: pEntity<'a>,
 
-        Some(format!(
-            "{}!({});",
-            children.get(0)?.r()?,
-            children.get(1)?.r()?
-        ))
+    directive: Option<pEntity<'a>>,
+    arg: Option<pEntity<'a>>,
+}
+
+impl<'a> Entityable<'a> for PreprocCall<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self {
+            entity,
+            directive: entity.depth_first_descend(&[19 /* preproc_directive */], 1),
+            arg: entity.depth_first_descend(&[18 /* preproc_arg */], 1),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
+        Some(format!("{}!({});", self.directive?.r()?, self.arg?.r()?))
     }
 }

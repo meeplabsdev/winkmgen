@@ -1,14 +1,14 @@
 use crate::{entities::Entityable, entity::pEntity};
 
 #[allow(unused)]
-pub struct GreaterThanOrEqual {}
+pub struct Const {}
 
-impl<'a> Entityable<'a> for GreaterThanOrEqual {
+impl<'a> Entityable<'a> for Const {
     fn new(_entity: pEntity<'a>) -> Self {
         Self {}
     }
 
     fn r(&'a self) -> Option<String> {
-        Some(String::from(">="))
+        Some(String::from("const"))
     }
 }

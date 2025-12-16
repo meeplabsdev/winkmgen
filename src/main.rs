@@ -8,11 +8,12 @@ use std::{
 use tree_sitter::{Parser, TreeCursor};
 
 use crate::{
-    entities::{Entity, ToRust},
+    entity::{Entity, EntityArena},
     error::Error,
 };
 
 pub mod entities;
+pub mod entity;
 pub mod error;
 pub mod windowskits;
 
@@ -30,17 +31,33 @@ fn main() -> Result<(), Error> {
 
     let mut source_code = String::new();
     fs::File::open(in_file)?.read_to_string(&mut source_code)?;
+    source_code = parse_source(source_code);
 
     SOURCE.lock().unwrap().extend(source_code.as_bytes());
     let tree = parser.parse(source_code, None).unwrap();
     enumerate_tree(&mut tree.walk(), 0);
 
+    let arena = EntityArena::new();
     let mut cursor = tree.walk();
-    let root = cursor.node();
+    let root = dive(&arena, &mut cursor);
 
-    let entity = Entity::new(&mut cursor, root);
+    fn dive<'a>(arena: &'a EntityArena<'a>, cursor: &mut TreeCursor<'a>) -> &'a Entity<'a> {
+        let node = cursor.node();
+        let mut children: Vec<&'a Entity<'a>> = Vec::new();
+
+        if cursor.goto_first_child() {
+            children.push(dive(arena, cursor));
+            while cursor.goto_next_sibling() {
+                children.push(dive(arena, cursor));
+            }
+            cursor.goto_parent();
+        }
+
+        arena.push(Entity::new(node, children))
+    }
+
     let mut file = fs::File::create(out_file)?;
-    file.write_all(entity.r().ok_or("Invalid file")?.as_bytes())?;
+    file.write_all(root.r().ok_or("Invalid file")?.as_bytes())?;
 
     Ok(())
 }
@@ -79,4 +96,10 @@ fn enumerate_tree(cursor: &mut TreeCursor, depth: usize) {
 
 fn get_from_range(range: Range<usize>) -> String {
     String::from_utf8(SOURCE.lock().unwrap()[range.start..range.end].to_vec()).unwrap()
+}
+
+fn parse_source(source: String) -> String {
+    source
+        .replace("EXTERN_C ", "extern \"C\" ")
+        .replace("DECLSPEC_SELECTANY ", "__declspec(selectany) ")
 }

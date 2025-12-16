@@ -1,14 +1,21 @@
-use crate::entities::{Entity, ToRust};
+use crate::{entities::Entityable, entity::pEntity};
 
 #[allow(unused)]
-pub struct ParenthesizedExpression<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for ParenthesizedExpression<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 3 {
-            return None;
-        }
+pub struct ParenthesizedExpression<'a> {
+    entity: pEntity<'a>,
+}
 
-        Some(format!("({})", children.get(1)?.r()?))
+impl<'a> Entityable<'a> for ParenthesizedExpression<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self { entity }
+    }
+
+    fn r(&'a self) -> Option<String> {
+        Some(format!(
+            "({})",
+            self.entity
+                .depth_first_descend(&[341 /* binary_expression */], 1)?
+                .r()?
+        ))
     }
 }

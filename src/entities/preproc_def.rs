@@ -1,19 +1,19 @@
-use crate::entities::{Entity, ToRust};
+use crate::entities::{Entity, Entityable};
 
 #[allow(unused)]
-pub struct PreprocDef<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for PreprocDef<'a> {
+pub struct PreprocDef<'a> {
+    entity: &'a Entity<'a>,
+}
+
+impl<'a> Entityable<'a> for PreprocDef<'a> {
+    fn new(entity: &'a Entity<'a>) -> Self {
+        Self { entity }
+    }
+
     fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 2 {
-            return None;
-        }
-
-        // Some(format!(
-        //     "pub static {}: IFDEF = Some(true);",
-        //     children.get(1)?.r()?
-        // ))
-
-        Some(format!("define!({});", children.get(1)?.r()?))
+        Some(format!(
+            "define!({});",
+            self.entity.descend_until(1 /* identifier */, 1)?.r()?
+        ))
     }
 }

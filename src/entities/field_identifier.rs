@@ -1,9 +1,16 @@
-use crate::entities::{Entity, ToRust};
+use crate::{entities::Entityable, entity::pEntity};
 
 #[allow(unused)]
-pub struct FieldIdentifier<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for FieldIdentifier<'a> {
+pub struct FieldIdentifier<'a> {
+    entity: pEntity<'a>,
+}
+
+impl<'a> Entityable<'a> for FieldIdentifier<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self { entity }
+    }
+
     fn r(&'a self) -> Option<String> {
-        Some(self.0.content.clone())
+        Some(self.entity.content())
     }
 }

@@ -1,14 +1,30 @@
-use crate::entities::{Entity, ToRust};
+use crate::{
+    entities::Entityable,
+    entity::{pEntity, vEntity},
+};
 
 #[allow(unused)]
-pub struct ConditionClause<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for ConditionClause<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 3 {
-            return None;
-        }
+pub struct ConditionClause<'a> {
+    entity: pEntity<'a>,
+    children: vEntity<'a>,
+}
 
-        Some(format!("({})", children.get(1)?.r()?,))
+impl<'a> Entityable<'a> for ConditionClause<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self {
+            entity,
+            children: entity.children(),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
+        Some(format!(
+            "({})",
+            self.children
+                .iter()
+                .filter_map(|c| c.r())
+                .collect::<Vec<String>>()
+                .join(" ")
+        ))
     }
 }

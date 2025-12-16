@@ -1,9 +1,16 @@
-use crate::entities::{Entity, ToRust};
+use crate::entities::{Entity, Entityable};
 
 #[allow(unused)]
-pub struct TypeIdentifier<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for TypeIdentifier<'a> {
+pub struct TypeIdentifier<'a> {
+    entity: &'a Entity<'a>,
+}
+
+impl<'a> Entityable<'a> for TypeIdentifier<'a> {
+    fn new(entity: &'a Entity<'a>) -> Self {
+        Self { entity }
+    }
+
     fn r(&'a self) -> Option<String> {
-        Some(self.0.content.clone())
+        Some(self.entity.content.clone())
     }
 }

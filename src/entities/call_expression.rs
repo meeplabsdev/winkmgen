@@ -1,16 +1,25 @@
-use crate::entities::{Entity, ToRust};
+use crate::{
+    entities::Entityable,
+    entity::{pEntity, vEntity},
+};
 
 #[allow(unused)]
-pub struct CallExpression<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for CallExpression<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 2 {
-            return None;
-        }
+pub struct CallExpression<'a> {
+    entity: pEntity<'a>,
+    children: vEntity<'a>,
+}
 
+impl<'a> Entityable<'a> for CallExpression<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self {
+            entity,
+            children: entity.children(),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
         Some(
-            children
+            self.children
                 .iter()
                 .filter_map(|c| c.r())
                 .collect::<Vec<String>>()

@@ -1,16 +1,25 @@
-use crate::entities::{Entity, ToRust};
+use crate::{
+    entities::{Entity, Entityable},
+    entity::{pEntity, vEntity},
+};
 
 #[allow(unused)]
-pub struct BinaryExpression<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for BinaryExpression<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 3 {
-            return None;
-        }
+pub struct BinaryExpression<'a> {
+    entity: pEntity<'a>,
+    children: vEntity<'a>,
+}
 
+impl<'a> Entityable<'a> for BinaryExpression<'a> {
+    fn new(entity: &'a Entity<'a>) -> Self {
+        Self {
+            entity,
+            children: entity.children(),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
         Some(
-            children
+            self.children
                 .iter()
                 .filter_map(|c| c.r())
                 .collect::<Vec<String>>()

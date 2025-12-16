@@ -1,19 +1,30 @@
-use crate::entities::{Entity, ToRust};
+use crate::{
+    entities::{Entity, Entityable},
+    entity::pEntity,
+};
 
 #[allow(unused)]
-pub struct IfStatement<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for IfStatement<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 3 {
-            return None;
-        }
+pub struct IfStatement<'a> {
+    entity: pEntity<'a>,
 
+    condition: Option<pEntity<'a>>,
+    content: Option<pEntity<'a>>,
+}
+
+impl<'a> Entityable<'a> for IfStatement<'a> {
+    fn new(entity: &'a Entity<'a>) -> Self {
+        Self {
+            entity,
+            condition: entity.depth_first_descend(&[441 /* condition_clause */], 1),
+            content: entity.depth_first_descend(&[295 /* compound_statement */], 1),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
         Some(format!(
             "if {} {}",
-            children.get(1)?.r()?,
-            children
-                .get(2)?
+            self.condition?.r()?,
+            self.content?
                 .r()?
                 .lines()
                 .collect::<Vec<&str>>()

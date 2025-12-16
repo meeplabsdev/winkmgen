@@ -4,12 +4,12 @@ use crate::{
 };
 
 #[allow(unused)]
-pub struct ExpressionStatement<'a> {
+pub struct LinkageSpecification<'a> {
     entity: pEntity<'a>,
     children: vEntity<'a>,
 }
 
-impl<'a> Entityable<'a> for ExpressionStatement<'a> {
+impl<'a> Entityable<'a> for LinkageSpecification<'a> {
     fn new(entity: pEntity<'a>) -> Self {
         Self {
             entity,
@@ -18,13 +18,6 @@ impl<'a> Entityable<'a> for ExpressionStatement<'a> {
     }
 
     fn r(&'a self) -> Option<String> {
-        Some(format!(
-            "{};",
-            self.children
-                .iter()
-                .filter_map(|c| c.r())
-                .collect::<Vec<String>>()
-                .join(" ")
-        ))
+        self.children.get(2)?.r()
     }
 }

@@ -1,13 +1,26 @@
-use crate::entities::{Entity, ToRust};
+use crate::{
+    entities::Entityable,
+    entity::{pEntity, vEntity},
+};
 
 #[allow(unused)]
-pub struct ArgumentList<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for ArgumentList<'a> {
+pub struct ArgumentList<'a> {
+    entity: pEntity<'a>,
+    children: vEntity<'a>,
+}
+
+impl<'a> Entityable<'a> for ArgumentList<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self {
+            entity,
+            children: entity.children(),
+        }
+    }
+
     fn r(&'a self) -> Option<String> {
         Some(format!(
             "({})",
-            self.0
-                .children
+            self.children
                 .iter()
                 .filter_map(|c| c.r())
                 .collect::<Vec<String>>()

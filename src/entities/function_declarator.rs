@@ -1,28 +1,46 @@
 use crate::{
-    entities::{Entity, ToRust},
-    get_from_range,
+    entities::Entityable,
+    entity::{pEntity, vEntity},
 };
 
 #[allow(unused)]
-pub struct FunctionDeclarator<'a>(pub &'a Entity<'a>);
-impl<'a> ToRust<'a> for FunctionDeclarator<'a> {
-    fn r(&'a self) -> Option<String> {
-        let children = &self.0.children;
-        if children.len() < 2 {
-            return None;
-        }
+pub struct FunctionDeclarator<'a> {
+    entity: pEntity<'a>,
+    children: vEntity<'a>,
 
-        let name = children.get(0)?.r()?;
-        if let Some(p) = self.0.ascend_until(303)
-            && name == get_from_range(p.child(1)?.byte_range())
+    name: Option<String>,
+    struct_name: Option<String>,
+}
+
+impl<'a> Entityable<'a> for FunctionDeclarator<'a> {
+    fn new(entity: pEntity<'a>) -> Self {
+        Self {
+            entity,
+            children: entity.children(),
+
+            name: entity.child(0).and_then(|e| e.r()),
+            struct_name: entity
+                .depth_first_ascend(&[303 /* struct_specifier */], 0)
+                .and_then(|e| e.depth_first_descend(&[542 /* type_identifier */], 1))
+                .and_then(|e| e.r()),
+        }
+    }
+
+    fn r(&'a self) -> Option<String> {
+        let name = self.name.clone()?;
+
+        // If the function name is the same as the struct name (constructor)
+        if let Some(n) = self.struct_name.clone()
+            && n == name
         {
             return Some(String::from("pub fn new() -> Self"));
         }
 
-        if name == String::from("drop") {
+        // destructor
+        if name == "drop" {
             return Some(String::from("fn drop(&mut self)"));
         }
 
-        Some(format!("fn {name}{}", children.get(1)?.r()?))
+        Some(format!("fn {name}{}", self.entity.child(1)?.r()?))
     }
 }
